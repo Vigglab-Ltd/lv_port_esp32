@@ -180,7 +180,7 @@ static void create_demo_application(void)
     lv_obj_t * label1 =  lv_label_create(scr, NULL);
 
     /*Modify the Label's text*/
-    lv_label_set_text(label1, "Hello\nworld");
+    lv_label_set_text(label1, "Hello\nworld911");
 
     /* Align the Label to the center
      * NULL means align on parent (which is the screen now)
