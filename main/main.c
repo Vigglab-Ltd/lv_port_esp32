@@ -8,6 +8,8 @@
  * software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  * CONDITIONS OF ANY KIND, either express or implied.
  */
+#define ESP_PLATFORM
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,19 +31,24 @@
 
 #include "lvgl_helpers.h"
 
-#ifndef CONFIG_LV_TFT_DISPLAY_MONOCHROME
-    #if defined CONFIG_LV_USE_DEMO_WIDGETS
-        #include "lv_examples/src/lv_demo_widgets/lv_demo_widgets.h"
-    #elif defined CONFIG_LV_USE_DEMO_KEYPAD_AND_ENCODER
-        #include "lv_examples/src/lv_demo_keypad_encoder/lv_demo_keypad_encoder.h"
-    #elif defined CONFIG_LV_USE_DEMO_BENCHMARK
-        #include "lv_examples/src/lv_demo_benchmark/lv_demo_benchmark.h"
-    #elif defined CONFIG_LV_USE_DEMO_STRESS
-        #include "lv_examples/src/lv_demo_stress/lv_demo_stress.h"
-    #else
-        #error "No demo application selected."
-    #endif
-#endif
+
+
+
+
+#include "esp_log.h"
+#include "nvs_flash.h"
+
+#include "esp_nimble_hci.h"
+#include "nimble/nimble_port.h"
+#include "nimble/nimble_port_freertos.h"
+#include "host/ble_hs.h"
+#include "host/util/util.h"
+#include "console/console.h"
+#include "services/gap/ble_svc_gap.h"
+#include "blecent.h"
+
+void ble_store_config_init(void);
+
 
 /*********************
  *      DEFINES
@@ -56,16 +63,79 @@ static void lv_tick_task(void *arg);
 static void guiTask(void *pvParameter);
 static void create_demo_application(void);
 
-/**********************
- *   APPLICATION MAIN
- **********************/
-void app_main() {
+
+
+
+
+
+void app_main() 
+{
+
+    int rc;
+    /* Initialize NVS â€” it is used to store PHY calibration data */
+    esp_err_t ret = nvs_flash_init();
+    if  (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
+    ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());
+
+    nimble_port_init();
+    /* Configure the host. */
+    ble_hs_cfg.reset_cb = blecent_on_reset;
+    ble_hs_cfg.sync_cb = blecent_on_sync;
+    ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
+
+    // /* Initialize data structures to track connected peers. */
+    // rc = peer_init(MYNEWT_VAL(BLE_MAX_CONNECTIONS), 64, 64, 64);
+    // assert(rc == 0);
+
+    /* Set the default device name. */
+    rc = ble_svc_gap_device_name_set("nimble-blecent");
+    assert(rc == 0);
+
+    /* XXX Need to have template for store */
+    ble_store_config_init();
+
+    nimble_port_freertos_init(blecent_host_task);
+
+
 
     /* If you want to use a task to create the graphic, you NEED to create a Pinned task
      * Otherwise there can be problem such as memory corruption and so on.
      * NOTE: When not using Wi-Fi nor Bluetooth you can pin the guiTask to core 0 */
     xTaskCreatePinnedToCore(guiTask, "gui", 4096*2, NULL, 0, NULL, 1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Creates a semaphore to handle concurrent call to lvgl stuff
  * If you wish to call *any* lvgl function from other threads/tasks
@@ -86,25 +156,13 @@ static void guiTask(void *pvParameter) {
     assert(buf1 != NULL);
 
     /* Use double buffered when not working with monochrome displays */
-#ifndef CONFIG_LV_TFT_DISPLAY_MONOCHROME
     lv_color_t* buf2 = heap_caps_malloc(DISP_BUF_SIZE * sizeof(lv_color_t), MALLOC_CAP_DMA);
     assert(buf2 != NULL);
-#else
-    static lv_color_t *buf2 = NULL;
-#endif
 
     static lv_disp_buf_t disp_buf;
 
     uint32_t size_in_px = DISP_BUF_SIZE;
 
-#if defined CONFIG_LV_TFT_DISPLAY_CONTROLLER_IL3820         \
-    || defined CONFIG_LV_TFT_DISPLAY_CONTROLLER_JD79653A    \
-    || defined CONFIG_LV_TFT_DISPLAY_CONTROLLER_UC8151D     \
-    || defined CONFIG_LV_TFT_DISPLAY_CONTROLLER_SSD1306
-
-    /* Actual size in pixels, not bytes. */
-    size_in_px *= 8;
-#endif
 
     /* Initialize the working buffer depending on the selected display.
      * NOTE: buf2 == NULL when using monochrome displays. */
@@ -114,13 +172,6 @@ static void guiTask(void *pvParameter) {
     lv_disp_drv_init(&disp_drv);
     disp_drv.flush_cb = disp_driver_flush;
 
-    /* When using a monochrome display we need to register the callbacks:
-     * - rounder_cb
-     * - set_px_cb */
-#ifdef CONFIG_LV_TFT_DISPLAY_MONOCHROME
-    disp_drv.rounder_cb = disp_driver_rounder;
-    disp_drv.set_px_cb = disp_driver_set_px;
-#endif
 
     disp_drv.buffer = &disp_buf;
     lv_disp_drv_register(&disp_drv);
@@ -165,6 +216,10 @@ static void guiTask(void *pvParameter) {
     vTaskDelete(NULL);
 }
 
+
+
+
+
 static void create_demo_application(void)
 {
     /* When using a monochrome display we only show "Hello World" centered on the
@@ -180,7 +235,7 @@ static void create_demo_application(void)
     lv_obj_t * label1 =  lv_label_create(scr, NULL);
 
     /*Modify the Label's text*/
-    lv_label_set_text(label1, "Hello\nworld911");
+    lv_label_set_text(label1, "Hello\nworld90210");
 
     /* Align the Label to the center
      * NULL means align on parent (which is the screen now)
@@ -189,19 +244,17 @@ static void create_demo_application(void)
 #else
     /* Otherwise we show the selected demo */
 
-    #if defined CONFIG_LV_USE_DEMO_WIDGETS
-        lv_demo_widgets();
-    #elif defined CONFIG_LV_USE_DEMO_KEYPAD_AND_ENCODER
-        lv_demo_keypad_encoder();
-    #elif defined CONFIG_LV_USE_DEMO_BENCHMARK
-        lv_demo_benchmark();
-    #elif defined CONFIG_LV_USE_DEMO_STRESS
-        lv_demo_stress();
-    #else
-        #error "No demo application selected."
-    #endif
 #endif
 }
+
+
+
+
+
+
+
+
+
 
 static void lv_tick_task(void *arg) {
     (void) arg;
