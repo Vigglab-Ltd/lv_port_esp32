@@ -34,7 +34,6 @@
 *.app
 *.i*86
 *.x86_64
-*.hex
 
 # Debug files
 *.dSYM/
@@ -54,9 +53,7 @@ dkms.conf
 # OS files
 .DS_Store
 
-build/
 sdkconfig.old
-sdkconfig
 
 # Jetbrains CLion IDE
 cmake-build-debug/
@@ -66,5 +63,3 @@ cmake-build-debug/
 .pio/
 platformio.ini
 
-# VS Code
-.vscode/

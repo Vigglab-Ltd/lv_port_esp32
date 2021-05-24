@@ -20,43 +20,44 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include "host/ble_hs.h"
-#include "host/ble_uuid.h"
-#include "blecent.h"
+//#include "host/ble_hs.h"
+//#include <bt/host/nimble/nimble/nimble/host/include/host/ble_hs.h>
+// #include "host/ble_uuid.h"
+// #include "blecent.h"
 
 
 
-void
-print_mbuf(const struct os_mbuf *om)
-{
-    int colon, i;
+// void
+// print_mbuf(const struct os_mbuf *om)
+// {
+//     int colon, i;
 
-    colon = 0;
-    while (om != NULL) {
-        if (colon) {
-            MODLOG_DFLT(INFO, ":");
-        } else {
-            colon = 1;
-        }
-        for (i = 0; i < om->om_len; i++) {
-            MODLOG_DFLT(INFO, "%s0x%02x", i != 0 ? ":" : "", om->om_data[i]);
-        }
-        om = SLIST_NEXT(om, om_next);
-    }
-}
+//     colon = 0;
+//     while (om != NULL) {
+//         if (colon) {
+//             MODLOG_DFLT(INFO, ":");
+//         } else {
+//             colon = 1;
+//         }
+//         for (i = 0; i < om->om_len; i++) {
+//             MODLOG_DFLT(INFO, "%s0x%02x", i != 0 ? ":" : "", om->om_data[i]);
+//         }
+//         om = SLIST_NEXT(om, om_next);
+//     }
+// }
 
-char *
-addr_str(const void *addr)
-{
-    static char buf[6 * 2 + 5 + 1];
-    const uint8_t *u8p;
+// char *
+// addr_str(const void *addr)
+// {
+//     static char buf[6 * 2 + 5 + 1];
+//     const uint8_t *u8p;
 
-    u8p = addr;
-    sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x",
-            u8p[5], u8p[4], u8p[3], u8p[2], u8p[1], u8p[0]);
+//     u8p = addr;
+//     sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x",
+//             u8p[5], u8p[4], u8p[3], u8p[2], u8p[1], u8p[0]);
 
-    return buf;
-}
+//     return buf;
+// }
 
 // void
 // print_uuid(const ble_uuid_t *uuid)
