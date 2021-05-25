@@ -32,7 +32,7 @@
 static const char *tag = "NimBLE_BLE_CENT";
 static int blecent_gap_event(struct ble_gap_event *event, void *arg);
 //static uint8_t peer_addr[6];
-
+extern float fahrenheit;
 // /**
 //  * Application callback.  Called when the attempt to subscribe to notifications
 //  * for the ANS Unread Alert Status characteristic has completed.
@@ -241,7 +241,7 @@ blecent_scan(void)
     /* Tell the controller to filter duplicates; we don't want to process
      * repeated advertisements from the same device.
      */
-    disc_params.filter_duplicates = 1;
+    disc_params.filter_duplicates = 0;
 
     /**
      * Perform a passive scan.  I.e., don't send follow-up scan requests to
@@ -385,16 +385,16 @@ blecent_gap_event(struct ble_gap_event *event, void *arg)
         {
             return 0;
         }
-        printf("fields.mfg_data_len = %d,  ", fields.mfg_data_len);
-        for (int i = 0; i < fields.mfg_data_len; i++)
-        {
-            printf("%s0x%02x", i != 0 ? ":" : "", fields.mfg_data[i]);
-        }
-        printf("\n");
         if ((fields.mfg_data_len > 2) &&
             (fields.mfg_data[0] == 0xFF) &&
             (fields.mfg_data[1] == 0xFF))
         {
+            printf("fields.mfg_data_len = %d,  ", fields.mfg_data_len);
+            for (int i = 0; i < fields.mfg_data_len; i++)
+            {
+                printf("%s0x%02x", i != 0 ? ":" : "", fields.mfg_data[i]);
+            }
+            printf("\n");
 // fields.mfg_data_len = 26,  
 //Manufacturer data //0xff:0xff:
 //page_num              0x00:
@@ -442,7 +442,10 @@ blecent_gap_event(struct ble_gap_event *event, void *arg)
             temperature_16bit |= temp16bit_2;
             printf("temperature_16bit   = %d\n", temperature_16bit);
             float celcius = temperature_16bit * 0.0625f;
-            float fahrenheit = ((celcius * 9.0f) / 5.0f) + 32.0f;
+            fahrenheit = ((celcius * 9.0f) / 5.0f) + 32.0f;
+
+//                lv_label_set_text_fmt(label1, "fahrenheit = %f.1", fahrenheit);
+
             printf("celcius    = %f\n", celcius);
             printf("fahrenheit = %f\n", fahrenheit);
 

@@ -63,6 +63,8 @@ static void guiTask(void *pvParameter);
 static void create_demo_application(void);
 
 
+lv_obj_t * label1 = NULL;
+float fahrenheit;
 
 
 
@@ -204,33 +206,31 @@ static void guiTask(void *pvParameter) {
 
 
 
-
+void update_fahrenheit(lv_task_t *task)
+{
+    if ((label1 != NULL) && (fahrenheit != 0.0f))
+    {
+        lv_label_set_text_fmt(label1, "fahrenheit = %f.1", fahrenheit);
+        fahrenheit = 0.0f;
+    }
+}
 
 static void create_demo_application(void)
 {
-    /* When using a monochrome display we only show "Hello World" centered on the
-     * screen */
-#if defined CONFIG_LV_TFT_DISPLAY_MONOCHROME || \
-    defined CONFIG_LV_TFT_DISPLAY_CONTROLLER_ST7735S
-
     /* use a pretty small demo for monochrome displays */
     /* Get the current screen  */
     lv_obj_t * scr = lv_disp_get_scr_act(NULL);
-
     /*Create a Label on the currently active screen*/
-    lv_obj_t * label1 =  lv_label_create(scr, NULL);
-
+    label1 =  lv_label_create(scr, NULL);
+    lv_label_set_text_fmt(label1, "fahrenheit = %f.1", fahrenheit);
     /*Modify the Label's text*/
-    lv_label_set_text(label1, "Hello\nworld90210");
-
+    lv_label_set_text(label1, "Temperature");
     /* Align the Label to the center
      * NULL means align on parent (which is the screen now)
      * 0, 0 at the end means an x, y offset after alignment*/
     lv_obj_align(label1, NULL, LV_ALIGN_CENTER, 0, 0);
-#else
-    /* Otherwise we show the selected demo */
 
-#endif
+    lv_task_create(update_fahrenheit, 100, LV_TASK_PRIO_MID, NULL);
 }
 
 
