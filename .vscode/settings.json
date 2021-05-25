@@ -1,5 +1,6 @@
 {
     "files.associations": {
         "ble_hs.h": "c"
-    }
+    },
+    "idf.portWin": "COM4"
 }

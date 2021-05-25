@@ -1,22 +1,30 @@
 {
+    "env": {
+        "MESSAGE": " MAC AND LINUX USERS!!!- change path from c:/... to ~/esp/... or as approirate for your enviroment",
+        "IDF_TOOLS": "C:/ESP/.espressif/tools",
+        "IDF_PATH": "c:/esp/esp-idf"
+    },
     "configurations": [
         {
-            "name": "Win32",
+            "name": "esp32",
+            "browse": {
+                "path": [
+                    "${workspaceFolder}",
+                    "${IDF_PATH}",
+                    "${IDF_TOOLS}"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            },
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/**",
-                "C:/ESP/esp-idf/components/**"
+                "${config:idf.espIdfPath}/components/**"
             ],
-            "defines": [
-                "_DEBUG",
-                "UNICODE",
-                "_UNICODE"
-            ],
-            "windowsSdkVersion": "10.0.19041.0",
-            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64/cl.exe",
-            "cStandard": "c17",
+            "defines": [],
+            "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "windows-msvc-x64"
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "C:\\ESP\\.espressif\\tools\\xtensa-esp32-elf\\esp-2020r3-8.4.0\\xtensa-esp32-elf\\bin\\xtensa-esp32-elf-gcc.exe"
         }
     ],
     "version": 4

@@ -108,19 +108,6 @@ void app_main()
     xTaskCreatePinnedToCore(guiTask, "gui", 4096*2, NULL, 0, NULL, 1);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 

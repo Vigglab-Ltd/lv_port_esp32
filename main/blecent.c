@@ -33,7 +33,6 @@ static const char *tag = "NimBLE_BLE_CENT";
 static int blecent_gap_event(struct ble_gap_event *event, void *arg);
 //static uint8_t peer_addr[6];
 
-
 // /**
 //  * Application callback.  Called when the attempt to subscribe to notifications
 //  * for the ANS Unread Alert Status characteristic has completed.
@@ -233,7 +232,8 @@ blecent_scan(void)
 
     /* Figure out address to use while advertising (no privacy for now) */
     rc = ble_hs_id_infer_auto(0, &own_addr_type);
-    if (rc != 0) {
+    if (rc != 0)
+    {
         MODLOG_DFLT(ERROR, "error determining address type; rc=%d\n", rc);
         return;
     }
@@ -257,7 +257,8 @@ blecent_scan(void)
 
     rc = ble_gap_disc(own_addr_type, BLE_HS_FOREVER, &disc_params,
                       blecent_gap_event, NULL);
-    if (rc != 0) {
+    if (rc != 0)
+    {
         MODLOG_DFLT(ERROR, "Error initiating GAP discovery procedure; rc=%d\n",
                     rc);
     }
@@ -354,9 +355,6 @@ blecent_scan(void)
 //     }
 // }
 
-
-
-
 /**
  * The nimble host executes this callback when a GAP event occurs.  The
  * application associates a GAP event callback with each connection that is
@@ -374,26 +372,93 @@ blecent_scan(void)
 static int
 blecent_gap_event(struct ble_gap_event *event, void *arg)
 {
-//    struct ble_gap_conn_desc desc;
+    //    struct ble_gap_conn_desc desc;
     struct ble_hs_adv_fields fields;
     int rc;
 
-    switch (event->type) {
+    switch (event->type)
+    {
     case BLE_GAP_EVENT_DISC:
         rc = ble_hs_adv_parse_fields(&fields, event->disc.data,
                                      event->disc.length_data);
-        if (rc != 0) {
+        if (rc != 0)
+        {
             return 0;
         }
-
-
-        int i;
-        printf ("fields.mfg_data_len = %d,  ",  fields.mfg_data_len);
-
-        for (i = 0; i < fields.mfg_data_len; i++) {
+        printf("fields.mfg_data_len = %d,  ", fields.mfg_data_len);
+        for (int i = 0; i < fields.mfg_data_len; i++)
+        {
             printf("%s0x%02x", i != 0 ? ":" : "", fields.mfg_data[i]);
         }
         printf("\n");
+        if ((fields.mfg_data_len > 2) &&
+            (fields.mfg_data[0] == 0xFF) &&
+            (fields.mfg_data[1] == 0xFF))
+        {
+// fields.mfg_data_len = 26,  
+//Manufacturer data //0xff:0xff:
+//page_num              0x00:
+//device id 0x43:0xeb:0x6c:0x52:0x43:
+//count mins 0x64:0x6a:0x00:
+//0x00:0x00:0x01:0xb4:0x7f:0x00:0xae:0x00:0x00:0x00:0x00:0x00:0x00:0x00:0x00
+// celcius    = 0.625000
+// fahrenheit = 33.125000
+// brightness = 180
+// water      = 127            
+
+            uint8_t adv_i = 2;
+            uint8_t page_num     = fields.mfg_data[adv_i++];
+            uint8_t reboot_count = fields.mfg_data[adv_i++];
+
+            printf("page_num   = %d\n", page_num);
+            printf("reboot_count   = %d\n", reboot_count);
+
+            uint8_t device_id0   = fields.mfg_data[adv_i++];
+            uint8_t device_id1   = fields.mfg_data[adv_i++];
+            uint8_t device_id2   = fields.mfg_data[adv_i++];
+            uint8_t device_id3   = fields.mfg_data[adv_i++];
+            uint8_t device_id4   = fields.mfg_data[adv_i++];
+            uint8_t device_id5   = fields.mfg_data[adv_i++];
+            printf("device_id0   = 0x%2x\n", device_id0);
+            printf("device_id1   = 0x%2x\n", device_id1);
+            printf("device_id2   = 0x%2x\n", device_id2);
+            printf("device_id3   = 0x%2x\n", device_id3);
+            printf("device_id4   = 0x%2x\n", device_id4);
+            printf("device_id5   = 0x%2x\n", device_id5);
+
+            uint8_t count_mins1  = fields.mfg_data[adv_i++];
+            uint8_t count_mins2  = fields.mfg_data[adv_i++];
+            uint8_t count_mins3  = fields.mfg_data[adv_i++];
+            printf("count_mins1   = %d\n", count_mins1);
+            printf("count_mins2   = %d\n", count_mins2);
+            printf("count_mins3   = %d\n", count_mins3);
+
+            uint8_t temp16bit_1  = fields.mfg_data[adv_i++];
+            uint8_t temp16bit_2  = fields.mfg_data[adv_i++];
+            printf("temp16bit_1   = %d\n", temp16bit_1);
+            printf("temp16bit_2   = %d\n", temp16bit_2);
+            int32_t temperature_16bit = temp16bit_1;
+            temperature_16bit <<= 8;
+            temperature_16bit |= temp16bit_2;
+            printf("temperature_16bit   = %d\n", temperature_16bit);
+            float celcius = temperature_16bit * 0.0625f;
+            float fahrenheit = ((celcius * 9.0f) / 5.0f) + 32.0f;
+            printf("celcius    = %f\n", celcius);
+            printf("fahrenheit = %f\n", fahrenheit);
+
+            uint8_t brightness   = fields.mfg_data[adv_i++];
+            uint8_t water        = fields.mfg_data[adv_i++];
+            printf("brightness = %d\n", brightness);
+            printf("water      = %d\n", water);
+
+            uint8_t activity_1   = fields.mfg_data[adv_i++];
+            uint8_t activity_2   = fields.mfg_data[adv_i++];
+            uint8_t activity_3   = fields.mfg_data[adv_i++];
+            printf("activity_1   = %d\n", activity_1);
+            printf("activity_2   = %d\n", activity_2);
+            printf("activity_3   = %d\n", activity_3);
+
+        }
 
         /* An advertisment report was received during GAP discovery. */
         //print_adv_fields(&fields);
@@ -402,103 +467,103 @@ blecent_gap_event(struct ble_gap_event *event, void *arg)
         // blecent_connect_if_interesting(&event->disc);
         return 0;
 
-    // case BLE_GAP_EVENT_CONNECT:
-    //     /* A new connection was established or a connection attempt failed. */
-    //     if (event->connect.status == 0) {
-    //         /* Connection successfully established. */
-    //         MODLOG_DFLT(INFO, "Connection established ");
+        // case BLE_GAP_EVENT_CONNECT:
+        //     /* A new connection was established or a connection attempt failed. */
+        //     if (event->connect.status == 0) {
+        //         /* Connection successfully established. */
+        //         MODLOG_DFLT(INFO, "Connection established ");
 
-    //         rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
-    //         assert(rc == 0);
-    //         print_conn_desc(&desc);
-    //         MODLOG_DFLT(INFO, "\n");
+        //         rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
+        //         assert(rc == 0);
+        //         print_conn_desc(&desc);
+        //         MODLOG_DFLT(INFO, "\n");
 
-    //         /* Remember peer. */
-    //         rc = peer_add(event->connect.conn_handle);
-    //         if (rc != 0) {
-    //             MODLOG_DFLT(ERROR, "Failed to add peer; rc=%d\n", rc);
-    //             return 0;
-    //         }
+        //         /* Remember peer. */
+        //         rc = peer_add(event->connect.conn_handle);
+        //         if (rc != 0) {
+        //             MODLOG_DFLT(ERROR, "Failed to add peer; rc=%d\n", rc);
+        //             return 0;
+        //         }
 
-    //         /* Perform service discovery. */
-    //         rc = peer_disc_all(event->connect.conn_handle,
-    //                            blecent_on_disc_complete, NULL);
-    //         if (rc != 0) {
-    //             MODLOG_DFLT(ERROR, "Failed to discover services; rc=%d\n", rc);
-    //             return 0;
-    //         }
-    //     } else {
-    //         /* Connection attempt failed; resume scanning. */
-    //         MODLOG_DFLT(ERROR, "Error: Connection failed; status=%d\n",
-    //                     event->connect.status);
-    //         blecent_scan();
-    //     }
+        //         /* Perform service discovery. */
+        //         rc = peer_disc_all(event->connect.conn_handle,
+        //                            blecent_on_disc_complete, NULL);
+        //         if (rc != 0) {
+        //             MODLOG_DFLT(ERROR, "Failed to discover services; rc=%d\n", rc);
+        //             return 0;
+        //         }
+        //     } else {
+        //         /* Connection attempt failed; resume scanning. */
+        //         MODLOG_DFLT(ERROR, "Error: Connection failed; status=%d\n",
+        //                     event->connect.status);
+        //         blecent_scan();
+        //     }
 
-    //     return 0;
+        //     return 0;
 
-    // case BLE_GAP_EVENT_DISCONNECT:
-    //     /* Connection terminated. */
-    //     MODLOG_DFLT(INFO, "disconnect; reason=%d ", event->disconnect.reason);
-    //     print_conn_desc(&event->disconnect.conn);
-    //     MODLOG_DFLT(INFO, "\n");
+        // case BLE_GAP_EVENT_DISCONNECT:
+        //     /* Connection terminated. */
+        //     MODLOG_DFLT(INFO, "disconnect; reason=%d ", event->disconnect.reason);
+        //     print_conn_desc(&event->disconnect.conn);
+        //     MODLOG_DFLT(INFO, "\n");
 
-    //     /* Forget about peer. */
-    //     peer_delete(event->disconnect.conn.conn_handle);
+        //     /* Forget about peer. */
+        //     peer_delete(event->disconnect.conn.conn_handle);
 
-    //     /* Resume scanning. */
-    //     blecent_scan();
-    //     return 0;
+        //     /* Resume scanning. */
+        //     blecent_scan();
+        //     return 0;
 
     case BLE_GAP_EVENT_DISC_COMPLETE:
         MODLOG_DFLT(INFO, "discovery complete; reason=%d\n",
                     event->disc_complete.reason);
         return 0;
 
-    // case BLE_GAP_EVENT_ENC_CHANGE:
-    //     /* Encryption has been enabled or disabled for this connection. */
-    //     MODLOG_DFLT(INFO, "encryption change event; status=%d ",
-    //                 event->enc_change.status);
-    //     rc = ble_gap_conn_find(event->enc_change.conn_handle, &desc);
-    //     assert(rc == 0);
-    //     print_conn_desc(&desc);
-    //     return 0;
+        // case BLE_GAP_EVENT_ENC_CHANGE:
+        //     /* Encryption has been enabled or disabled for this connection. */
+        //     MODLOG_DFLT(INFO, "encryption change event; status=%d ",
+        //                 event->enc_change.status);
+        //     rc = ble_gap_conn_find(event->enc_change.conn_handle, &desc);
+        //     assert(rc == 0);
+        //     print_conn_desc(&desc);
+        //     return 0;
 
-    // case BLE_GAP_EVENT_NOTIFY_RX:
-    //     /* Peer sent us a notification or indication. */
-    //     MODLOG_DFLT(INFO, "received %s; conn_handle=%d attr_handle=%d "
-    //                 "attr_len=%d\n",
-    //                 event->notify_rx.indication ?
-    //                 "indication" :
-    //                 "notification",
-    //                 event->notify_rx.conn_handle,
-    //                 event->notify_rx.attr_handle,
-    //                 OS_MBUF_PKTLEN(event->notify_rx.om));
+        // case BLE_GAP_EVENT_NOTIFY_RX:
+        //     /* Peer sent us a notification or indication. */
+        //     MODLOG_DFLT(INFO, "received %s; conn_handle=%d attr_handle=%d "
+        //                 "attr_len=%d\n",
+        //                 event->notify_rx.indication ?
+        //                 "indication" :
+        //                 "notification",
+        //                 event->notify_rx.conn_handle,
+        //                 event->notify_rx.attr_handle,
+        //                 OS_MBUF_PKTLEN(event->notify_rx.om));
 
-    //     /* Attribute data is contained in event->notify_rx.attr_data. */
-    //     return 0;
+        //     /* Attribute data is contained in event->notify_rx.attr_data. */
+        //     return 0;
 
-    // case BLE_GAP_EVENT_MTU:
-    //     MODLOG_DFLT(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
-    //                 event->mtu.conn_handle,
-    //                 event->mtu.channel_id,
-    //                 event->mtu.value);
-    //     return 0;
+        // case BLE_GAP_EVENT_MTU:
+        //     MODLOG_DFLT(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
+        //                 event->mtu.conn_handle,
+        //                 event->mtu.channel_id,
+        //                 event->mtu.value);
+        //     return 0;
 
-    // case BLE_GAP_EVENT_REPEAT_PAIRING:
-    //     /* We already have a bond with the peer, but it is attempting to
-    //      * establish a new secure link.  This app sacrifices security for
-    //      * convenience: just throw away the old bond and accept the new link.
-    //      */
+        // case BLE_GAP_EVENT_REPEAT_PAIRING:
+        //     /* We already have a bond with the peer, but it is attempting to
+        //      * establish a new secure link.  This app sacrifices security for
+        //      * convenience: just throw away the old bond and accept the new link.
+        //      */
 
-    //     /* Delete the old bond. */
-    //     rc = ble_gap_conn_find(event->repeat_pairing.conn_handle, &desc);
-    //     assert(rc == 0);
-    //     ble_store_util_delete_peer(&desc.peer_id_addr);
+        //     /* Delete the old bond. */
+        //     rc = ble_gap_conn_find(event->repeat_pairing.conn_handle, &desc);
+        //     assert(rc == 0);
+        //     ble_store_util_delete_peer(&desc.peer_id_addr);
 
-    //     /* Return BLE_GAP_REPEAT_PAIRING_RETRY to indicate that the host should
-    //      * continue with the pairing operation.
-    //      */
-    //     return BLE_GAP_REPEAT_PAIRING_RETRY;
+        //     /* Return BLE_GAP_REPEAT_PAIRING_RETRY to indicate that the host should
+        //      * continue with the pairing operation.
+        //      */
+        //     return BLE_GAP_REPEAT_PAIRING_RETRY;
 
     default:
         return 0;
