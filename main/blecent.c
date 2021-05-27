@@ -33,6 +33,11 @@ static const char *tag = "NimBLE_BLE_CENT";
 static int blecent_gap_event(struct ble_gap_event *event, void *arg);
 //static uint8_t peer_addr[6];
 extern float fahrenheit;
+extern uint8_t brightness;
+extern uint8_t water;
+
+extern bool dashboard_needs_redrawn;
+
 // /**
 //  * Application callback.  Called when the attempt to subscribe to notifications
 //  * for the ANS Unread Alert Status characteristic has completed.
@@ -435,22 +440,16 @@ blecent_gap_event(struct ble_gap_event *event, void *arg)
 
             uint8_t temp16bit_1  = fields.mfg_data[adv_i++];
             uint8_t temp16bit_2  = fields.mfg_data[adv_i++];
-            printf("temp16bit_1   = %d\n", temp16bit_1);
-            printf("temp16bit_2   = %d\n", temp16bit_2);
             int32_t temperature_16bit = temp16bit_1;
             temperature_16bit <<= 8;
             temperature_16bit |= temp16bit_2;
-            printf("temperature_16bit   = %d\n", temperature_16bit);
             float celcius = temperature_16bit * 0.0625f;
             fahrenheit = ((celcius * 9.0f) / 5.0f) + 32.0f;
-
-//                lv_label_set_text_fmt(label1, "fahrenheit = %f.1", fahrenheit);
-
             printf("celcius    = %f\n", celcius);
             printf("fahrenheit = %f\n", fahrenheit);
 
-            uint8_t brightness   = fields.mfg_data[adv_i++];
-            uint8_t water        = fields.mfg_data[adv_i++];
+            brightness   = fields.mfg_data[adv_i++];
+            water        = fields.mfg_data[adv_i++];
             printf("brightness = %d\n", brightness);
             printf("water      = %d\n", water);
 
@@ -460,6 +459,7 @@ blecent_gap_event(struct ble_gap_event *event, void *arg)
             printf("activity_1   = %d\n", activity_1);
             printf("activity_2   = %d\n", activity_2);
             printf("activity_3   = %d\n", activity_3);
+            dashboard_needs_redrawn = true;
 
         }
 

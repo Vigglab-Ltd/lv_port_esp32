@@ -1,1 +1,1 @@
-idf_component_register(SRCS  blecent.c misc.c main.c)
+idf_component_register(SRCS  blecent.c misc.c main.c dashboard.c)

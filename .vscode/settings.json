@@ -1,6 +1,8 @@
 {
     "files.associations": {
-        "ble_hs.h": "c"
+        "ble_hs.h": "c",
+        "math.h": "c",
+        "freertos.h": "c"
     },
     "idf.portWin": "COM4"
 }
