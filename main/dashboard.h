@@ -1,3 +1,4 @@
+#pragma once
 void create_dashboard_UI(void);
 
 
