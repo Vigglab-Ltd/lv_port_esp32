@@ -35,6 +35,8 @@ static int blecent_gap_event(struct ble_gap_event *event, void *arg);
 extern float fahrenheit;
 extern uint8_t brightness;
 extern uint8_t water;
+extern int8_t breathing_chart_array[24];
+
 
 extern bool dashboard_needs_redrawn;
 
@@ -413,53 +415,69 @@ blecent_gap_event(struct ble_gap_event *event, void *arg)
 
             uint8_t adv_i = 2;
             uint8_t page_num     = fields.mfg_data[adv_i++];
-            uint8_t reboot_count = fields.mfg_data[adv_i++];
 
-            printf("page_num   = %d\n", page_num);
-            printf("reboot_count   = %d\n", reboot_count);
+            if (page_num == 0)
+            {
+                uint8_t reboot_count = fields.mfg_data[adv_i++];
 
-            uint8_t device_id0   = fields.mfg_data[adv_i++];
-            uint8_t device_id1   = fields.mfg_data[adv_i++];
-            uint8_t device_id2   = fields.mfg_data[adv_i++];
-            uint8_t device_id3   = fields.mfg_data[adv_i++];
-            uint8_t device_id4   = fields.mfg_data[adv_i++];
-            uint8_t device_id5   = fields.mfg_data[adv_i++];
-            printf("device_id0   = 0x%2x\n", device_id0);
-            printf("device_id1   = 0x%2x\n", device_id1);
-            printf("device_id2   = 0x%2x\n", device_id2);
-            printf("device_id3   = 0x%2x\n", device_id3);
-            printf("device_id4   = 0x%2x\n", device_id4);
-            printf("device_id5   = 0x%2x\n", device_id5);
+                printf("page_num   = %d\n", page_num);
+                printf("reboot_count   = %d\n", reboot_count);
 
-            uint8_t count_mins1  = fields.mfg_data[adv_i++];
-            uint8_t count_mins2  = fields.mfg_data[adv_i++];
-            uint8_t count_mins3  = fields.mfg_data[adv_i++];
-            printf("count_mins1   = %d\n", count_mins1);
-            printf("count_mins2   = %d\n", count_mins2);
-            printf("count_mins3   = %d\n", count_mins3);
+                uint8_t device_id0   = fields.mfg_data[adv_i++];
+                uint8_t device_id1   = fields.mfg_data[adv_i++];
+                uint8_t device_id2   = fields.mfg_data[adv_i++];
+                uint8_t device_id3   = fields.mfg_data[adv_i++];
+                uint8_t device_id4   = fields.mfg_data[adv_i++];
+                uint8_t device_id5   = fields.mfg_data[adv_i++];
+                printf("device_id0   = 0x%2x\n", device_id0);
+                printf("device_id1   = 0x%2x\n", device_id1);
+                printf("device_id2   = 0x%2x\n", device_id2);
+                printf("device_id3   = 0x%2x\n", device_id3);
+                printf("device_id4   = 0x%2x\n", device_id4);
+                printf("device_id5   = 0x%2x\n", device_id5);
 
-            uint8_t temp16bit_1  = fields.mfg_data[adv_i++];
-            uint8_t temp16bit_2  = fields.mfg_data[adv_i++];
-            int32_t temperature_16bit = temp16bit_1;
-            temperature_16bit <<= 8;
-            temperature_16bit |= temp16bit_2;
-            float celcius = temperature_16bit * 0.0625f;
-            fahrenheit = ((celcius * 9.0f) / 5.0f) + 32.0f;
-            printf("celcius    = %f\n", celcius);
-            printf("fahrenheit = %f\n", fahrenheit);
+                uint8_t count_mins1  = fields.mfg_data[adv_i++];
+                uint8_t count_mins2  = fields.mfg_data[adv_i++];
+                uint8_t count_mins3  = fields.mfg_data[adv_i++];
+                printf("count_mins1   = %d\n", count_mins1);
+                printf("count_mins2   = %d\n", count_mins2);
+                printf("count_mins3   = %d\n", count_mins3);
 
-            brightness   = fields.mfg_data[adv_i++];
-            water        = fields.mfg_data[adv_i++];
-            printf("brightness = %d\n", brightness);
-            printf("water      = %d\n", water);
+                uint8_t temp16bit_1  = fields.mfg_data[adv_i++];
+                uint8_t temp16bit_2  = fields.mfg_data[adv_i++];
+                int32_t temperature_16bit = temp16bit_1;
+                temperature_16bit <<= 8;
+                temperature_16bit |= temp16bit_2;
+                float celcius = temperature_16bit * 0.0625f;
+                fahrenheit = ((celcius * 9.0f) / 5.0f) + 32.0f;
+                printf("celcius    = %f\n", celcius);
+                printf("fahrenheit = %f\n", fahrenheit);
 
-            uint8_t activity_1   = fields.mfg_data[adv_i++];
-            uint8_t activity_2   = fields.mfg_data[adv_i++];
-            uint8_t activity_3   = fields.mfg_data[adv_i++];
-            printf("activity_1   = %d\n", activity_1);
-            printf("activity_2   = %d\n", activity_2);
-            printf("activity_3   = %d\n", activity_3);
-            dashboard_needs_redrawn = true;
+                brightness   = fields.mfg_data[adv_i++];
+                water        = fields.mfg_data[adv_i++];
+                printf("brightness = %d\n", brightness);
+                printf("water      = %d\n", water);
+
+                uint8_t activity_1   = fields.mfg_data[adv_i++];
+                uint8_t activity_2   = fields.mfg_data[adv_i++];
+                uint8_t activity_3   = fields.mfg_data[adv_i++];
+                printf("activity_1   = %d\n", activity_1);
+                printf("activity_2   = %d\n", activity_2);
+                printf("activity_3   = %d\n", activity_3);
+                dashboard_needs_redrawn = true;
+            }
+            else
+            {
+
+                printf("page_num   = %d\n", page_num);
+                for (int ii = 0; ii < 23; ii++)
+                {
+                    breathing_chart_array[ii] = fields.mfg_data[adv_i++];
+//                    printf("sY = %d\n", breathing_chart_array[ii]);
+                }
+
+                dashboard_needs_redrawn = true;
+            }
 
         }
 

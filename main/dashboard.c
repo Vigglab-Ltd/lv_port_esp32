@@ -40,11 +40,14 @@ lv_obj_t *fahrenheit_label = NULL;
 //lv_obj_t *dirtyLED = NULL;
 lv_obj_t *dirty_btn = NULL;
 lv_obj_t *dirty_btn_label = NULL;
+
 lv_obj_t *wet_btn = NULL;
 lv_obj_t *wet_btn_label = NULL;
-lv_obj_t *chart = NULL;
-lv_chart_series_t* chart_fahrenheit_series = NULL;
-lv_chart_series_t* chart_activity_series = NULL;
+
+lv_obj_t *breathing_chart = NULL;
+lv_chart_series_t* breathing_chart_series = NULL;
+//lv_chart_series_t* chart_activity_series = NULL;
+int8_t breathing_chart_array[24];
 
 bool dashboard_needs_redrawn = true;
 uint8_t brightness;
@@ -66,35 +69,9 @@ double SinRange(double input, double range_min, double range_max)
     double v3 = v2 + ((range_max + range_min) / 2.0);
     return v3;
 }
-void update_dashboard(lv_task_t *task)
-{
-    //  double di = diii++;
 
-    //  fahrenheit = SinRange(di / 10.0, 90.0, 105.0);
-    //  brightness = SinRange(di / 10.0, 0.0, 120.0);
-    //  water      = SinRange(di / 10.0, 0.0, 120.0);
-    //  dashboard_needs_redrawn = true;
 
-    if (dashboard_needs_redrawn)
-    {
-        dashboard_needs_redrawn = false;
 
-        update_thermometer();
-        update_dirty();
-        update_water();
-        update_chart();
-    }
-}
-
-void update_chart()
-{
-    float scale_max = 105.0;
-    float scale_min = 90.0;
-    float temp = (fahrenheit - scale_min) / (scale_max - scale_min) ;
-    lv_coord_t scaled_fahrenheit = 1000 * temp;
-
-    lv_chart_set_next(chart, chart_fahrenheit_series, scaled_fahrenheit);
-}
 
 void update_thermometer()
 {
@@ -113,50 +90,6 @@ void update_thermometer()
     //}
 //    lv_bar_set_value(fahrenheit_bar, (int16_t)fahrenheit * 10.0f, LV_ANIM_ON);
 }
-
-
-void update_dirty()
-{
-    if (brightness > 100)
-    {
-        lv_btn_set_state(dirty_btn, LV_BTN_STATE_RELEASED);
-        lv_label_set_text(dirty_btn_label, "Clean");
-    }
-    else if (brightness > 70)
-    {
-        lv_btn_set_state(dirty_btn, LV_BTN_STATE_PRESSED);
-        lv_label_set_text(dirty_btn_label, "Check");
-    }
-    else
-    {
-        lv_btn_set_state(dirty_btn, LV_BTN_STATE_DISABLED);
-        lv_label_set_text(dirty_btn_label, "Dirty");
-    }
-}
-
-
-
-void update_water()
-{
-    if (water < 10)
-    {
-        lv_btn_set_state(wet_btn, LV_BTN_STATE_RELEASED);
-        lv_label_set_text(wet_btn_label, "Dry");
-    }
-    else if (water < 30)
-    {
-        lv_btn_set_state(wet_btn, LV_BTN_STATE_PRESSED);
-        lv_label_set_text(wet_btn_label, "Damp");
-    }
-    else
-    {
-        lv_btn_set_state(wet_btn, LV_BTN_STATE_DISABLED);
-        lv_label_set_text(wet_btn_label, "Wet");
-    }
-}
-
-
-
 
 
 void make_thermometer(lv_obj_t* scr)
@@ -235,6 +168,30 @@ void make_thermometer(lv_obj_t* scr)
     }
 }
 
+
+
+
+void update_dirty()
+{
+    if (brightness > 100)
+    {
+        lv_btn_set_state(dirty_btn, LV_BTN_STATE_RELEASED);
+        lv_label_set_text(dirty_btn_label, "Clean");
+    }
+    else if (brightness > 70)
+    {
+        lv_btn_set_state(dirty_btn, LV_BTN_STATE_PRESSED);
+        lv_label_set_text(dirty_btn_label, "Check");
+    }
+    else
+    {
+        lv_btn_set_state(dirty_btn, LV_BTN_STATE_DISABLED);
+        lv_label_set_text(dirty_btn_label, "Dirty");
+    }
+}
+
+
+
 void make_dirty_btn(lv_obj_t* scr)
 {
 
@@ -272,6 +229,24 @@ void make_dirty_btn(lv_obj_t* scr)
     lv_obj_set_size(dirty_btn_label, 30, 14);
 }
 
+void update_water()
+{
+    if (water < 10)
+    {
+        lv_btn_set_state(wet_btn, LV_BTN_STATE_RELEASED);
+        lv_label_set_text(wet_btn_label, "Dry");
+    }
+    else if (water < 30)
+    {
+        lv_btn_set_state(wet_btn, LV_BTN_STATE_PRESSED);
+        lv_label_set_text(wet_btn_label, "Damp");
+    }
+    else
+    {
+        lv_btn_set_state(wet_btn, LV_BTN_STATE_DISABLED);
+        lv_label_set_text(wet_btn_label, "Wet");
+    }
+}
 
 
 void make_wet_btn(lv_obj_t* scr)
@@ -315,28 +290,50 @@ void make_wet_btn(lv_obj_t* scr)
 
 
 
+void update_chart()
+{
+    float scale_max = 127.0f;
+    float scale_min = -128.0f;
+
+    for (int ii = 0; ii < 24; ii++)
+    {
+        int8_t new_val = breathing_chart_array[ii];
+        printf("sY = %d\n",breathing_chart_array[ii]);
+        breathing_chart_array[ii] = 0;
+        if (new_val == 0)
+            break;
+
+        float new_val_f =  (float) new_val;
+        float temp = (new_val_f - scale_min) / (scale_max - scale_min) ;
+        temp *= 1000.0f;
+        lv_coord_t scaled_new_val = temp;
+        lv_chart_set_next(breathing_chart, breathing_chart_series, scaled_new_val);
+    }
+
+}
+
 
 void make_chart(lv_obj_t* scr)
 {
-    chart = lv_chart_create(scr, NULL);
-    lv_obj_set_pos(chart, 0, 15);
-    lv_obj_set_size(chart, 120, 40);
-    lv_chart_set_range(chart, 0, 1000);
-    lv_chart_set_type(chart, LV_CHART_TYPE_LINE);
-    lv_chart_set_div_line_count(chart, 0, 0);
-    chart_fahrenheit_series = lv_chart_add_series(chart, LV_COLOR_MAKE(0x00, 0x7F, 0x7F));
-     //= lv_chart_add_series(chart, LV_THEME_DEFAULT_COLOR_SECONDARY);
+    breathing_chart = lv_chart_create(scr, NULL);
+    lv_obj_set_pos(breathing_chart, 0, 15);
+    lv_obj_set_size(breathing_chart, 120, 40);
+    lv_chart_set_range(breathing_chart, 0, 1000);
+    lv_chart_set_type(breathing_chart, LV_CHART_TYPE_LINE);
+    lv_chart_set_div_line_count(breathing_chart, 0, 0);
+    breathing_chart_series = lv_chart_add_series(breathing_chart, LV_COLOR_MAKE(0x00, 0x7F, 0x7F));
+     //= lv_chart_add_series(breathing_chart, LV_THEME_DEFAULT_COLOR_SECONDARY);
 
-    lv_chart_set_point_count(chart, 120);
-    lv_chart_init_points(chart, chart_fahrenheit_series, 0);
+    lv_chart_set_point_count(breathing_chart, 120);
+    lv_chart_init_points(breathing_chart, breathing_chart_series, 0);
 
     {
         static lv_style_t chart_part_series_style;
         lv_style_init(&chart_part_series_style);
-        lv_style_set_pad_inner(&chart_part_series_style, LV_STATE_DEFAULT, 0);
-        lv_style_set_size(&chart_part_series_style, LV_STATE_DEFAULT, 1);
+        lv_style_set_pad_inner(&chart_part_series_style, LV_STATE_DEFAULT, 0);      //column spacing
+        lv_style_set_size(&chart_part_series_style, LV_STATE_DEFAULT, 1);           //line point size
 
-        lv_obj_add_style(chart, LV_CHART_PART_SERIES, &chart_part_series_style);
+        lv_obj_add_style(breathing_chart, LV_CHART_PART_SERIES, &chart_part_series_style);
     }
     {
         static lv_style_t chart_part_bg_style;
@@ -349,7 +346,7 @@ void make_chart(lv_obj_t* scr)
 
         lv_style_set_border_color(&chart_part_bg_style, LV_STATE_DEFAULT, LV_COLOR_MAKE(50,50,50));
 
-        lv_obj_add_style(chart, LV_CHART_PART_BG, &chart_part_bg_style);
+        lv_obj_add_style(breathing_chart, LV_CHART_PART_BG, &chart_part_bg_style);
     }
     {
         static lv_style_t chart_part_series_bg_style;
@@ -358,7 +355,7 @@ void make_chart(lv_obj_t* scr)
         //lv_style_set_outline_color(&chart_part_series_bg_style, LV_STATE_DEFAULT, LV_COLOR_GREEN);
         //lv_style_set_border_color(&chart_part_series_bg_style, LV_STATE_DEFAULT, LV_COLOR_GREEN);
 
-        lv_obj_add_style(chart, LV_CHART_PART_SERIES_BG, &chart_part_series_bg_style);
+        lv_obj_add_style(breathing_chart, LV_CHART_PART_SERIES_BG, &chart_part_series_bg_style);
     }
     {
         static lv_style_t chart_part_cursor_style;
@@ -367,15 +364,15 @@ void make_chart(lv_obj_t* scr)
         //lv_style_set_outline_color(&chart_part_cursor_style, LV_STATE_DEFAULT, LV_COLOR_ORANGE);
         //lv_style_set_border_color(&chart_part_cursor_style, LV_STATE_DEFAULT, LV_COLOR_ORANGE);
 
-        lv_obj_add_style(chart, LV_CHART_PART_CURSOR, &chart_part_cursor_style);
+        lv_obj_add_style(breathing_chart, LV_CHART_PART_CURSOR, &chart_part_cursor_style);
 
     }
 
 
-    lv_obj_set_style_local_bg_opa       (chart,  LV_CHART_PART_SERIES, LV_STATE_DEFAULT, LV_OPA_50); /*Max. opa.*/
-    lv_obj_set_style_local_bg_grad_dir  (chart,  LV_CHART_PART_SERIES, LV_STATE_DEFAULT, LV_GRAD_DIR_VER);
-    lv_obj_set_style_local_bg_main_stop (chart,  LV_CHART_PART_SERIES, LV_STATE_DEFAULT, 255);    /*Max opa on the top*/
-    lv_obj_set_style_local_bg_grad_stop (chart,  LV_CHART_PART_SERIES, LV_STATE_DEFAULT, 0);      /*Transparent on the bottom*/
+    lv_obj_set_style_local_bg_opa       (breathing_chart,  LV_CHART_PART_SERIES, LV_STATE_DEFAULT, LV_OPA_50); /*Max. opa.*/
+    lv_obj_set_style_local_bg_grad_dir  (breathing_chart,  LV_CHART_PART_SERIES, LV_STATE_DEFAULT, LV_GRAD_DIR_VER);
+    lv_obj_set_style_local_bg_main_stop (breathing_chart,  LV_CHART_PART_SERIES, LV_STATE_DEFAULT, 255);    /*Max opa on the top*/
+    lv_obj_set_style_local_bg_grad_stop (breathing_chart,  LV_CHART_PART_SERIES, LV_STATE_DEFAULT, 0);      /*Transparent on the bottom*/
 
     //from lv_theme_material.c
             //list = lv_obj_get_style_list(obj, LV_CHART_PART_BG);
@@ -395,16 +392,35 @@ void make_chart(lv_obj_t* scr)
 
 
     //LV_CHART_PART_SERIES_BG
-    //lv_obj_set_style_local_text_font(chart, LV_CHART_PART_SERIES_BG, LV_STATE_DEFAULT, lv_theme_get_font_small());
-    //lv_obj_set_width_margin(chart, 1);
-    //lv_obj_set_height_margin(chart, 1);
-    //lv_chart_set_div_line_count(chart, 3, 0);
-    //lv_chart_set_range(chart, 600, 1200);// temperature range
+    //lv_obj_set_style_local_text_font(breathing_chart, LV_CHART_PART_SERIES_BG, LV_STATE_DEFAULT, lv_theme_get_font_small());
+    //lv_obj_set_width_margin(breathing_chart, 1);
+    //lv_obj_set_height_margin(breathing_chart, 1);
+    //lv_chart_set_div_line_count(breathing_chart, 3, 0);
+    //lv_chart_set_range(breathing_chartF, 600, 1200);// temperature range
 }
 
 
 
 
+void update_dashboard(lv_task_t *task)
+{
+    //  double di = diii++;
+
+    //  fahrenheit = SinRange(di / 10.0, 90.0, 105.0);
+    //  brightness = SinRange(di / 10.0, 0.0, 120.0);
+    //  water      = SinRange(di / 10.0, 0.0, 120.0);
+    //  dashboard_needs_redrawn = true;
+
+    if (dashboard_needs_redrawn)
+    {
+        dashboard_needs_redrawn = false;
+
+        update_thermometer();
+        update_dirty();
+        update_water();
+        update_chart();
+    }
+}
 
 void create_dashboard_UI(void)
 {
